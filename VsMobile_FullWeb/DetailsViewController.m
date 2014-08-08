@@ -14,7 +14,9 @@
 @end
 
 @implementation DetailsViewController {
+    MenuViewController *Menu;
     NSMutableDictionary *application;
+    NSMutableArray *allPages;
     NSMutableArray *appDependencies;
     NSMutableArray *pageDependencies;
 }
@@ -26,6 +28,16 @@
         // Custom initialization
     }
     return self;
+}
+
+- (void)setDetailItem:(id)newDetailItem
+{
+    if (_detailItem != newDetailItem) {
+        _detailItem = newDetailItem;
+        
+        // Update the view.
+        [self configureView];
+    }
 }
 
 - (void)viewDidLoad
@@ -46,6 +58,7 @@
         else {
             if ([application objectForKey:@"Dependencies"]) {
                 appDependencies = [application objectForKey:@"Dependencies"];
+                allPages = [application objectForKey:@"Pages"];
                 [self configureView];
                 self.navigationItem.backBarButtonItem.title = [application objectForKey:@"Name"];
             }
@@ -69,31 +82,35 @@
     // Update the user interface for the detail item.
     
     if (self.detailItem) {
-        // Get Page's Dependencies
-        if ([self.detailItem objectForKey:@"Dependencies"]) {
-            pageDependencies = [self.detailItem objectForKey:@"Dependencies"];
-        }
-        
-        // Load Content in the WebView
-        if ([self.detailItem objectForKey:@"HtmlContent"]) {
-            // Contact page already contains all Html.
-            if ([[self.detailItem objectForKey:@"Name"] isEqualToString:@"Contact"]) {
-                [self.Details loadHTMLString:[self.detailItem objectForKey:@"HtmlContent"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+        for (NSMutableDictionary *details in allPages) {
+            if ([[details objectForKey:@"Id"] isEqualToNumber:self.detailItem]) {
+                // Get Page's Dependencies
+                if ([details objectForKey:@"Dependencies"]) {
+                    pageDependencies = [self.detailItem objectForKey:@"Dependencies"];
+                }
+                
+                // Load Content in the WebView
+                if ([details objectForKey:@"HtmlContent"]) {
+                    // Contact page already contains all Html.
+                    if ([[details objectForKey:@"Name"] isEqualToString:@"Contact"]) {
+                        [self.Details loadHTMLString:[details objectForKey:@"HtmlContent"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+                    }
+                    else {
+                        [self.Details loadHTMLString:[self createHTML:[details objectForKey:@"HtmlContent"]] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+                    }
+                }
+                else {
+                    [self.Details loadHTMLString:[self createHTML:@"<center><font color='blue'>There is no content</font></center>"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+                }
+                
+                // Set Page's title
+                if (![self.detailItem objectForKey:@"Name"]) {
+                    self.AppName.text = @"No Name property";
+                }
+                else {
+                    self.AppName.text = [application objectForKey:@"Name"];
+                }
             }
-            else {
-                [self.Details loadHTMLString:[self createHTML:[self.detailItem objectForKey:@"HtmlContent"]] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
-            }
-        }
-        else {
-            [self.Details loadHTMLString:[self createHTML:@"<center><font color='blue'>There is no content</font></center>"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
-        }
-        
-        // Set Page's title
-        if (![self.detailItem objectForKey:@"Name"]) {
-            self.navigationItem.title = @"No Name property";
-        }
-        else {
-            self.navigationItem.title = [self.detailItem objectForKey:@"Name"];
         }
     }
 }
@@ -158,35 +175,6 @@
     return files;
 }
 
-#pragma mark - Web View
-- (void)webViewDidStartLoad:(UIWebView *)webView
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    
-}
-- (void)webViewDidFinishLoad:(UIWebView *)webView
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-}
-
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-    NSLog(@"fragment = %@", [request.URL fragment]);
-    NSString *path = [APPLICATION_SUPPORT_PATH stringByReplacingOccurrencesOfString:@" " withString:@"\%20"];
-    NSLog(@"Path = %@", path);
-    if ([[request.URL fragment] isEqualToString:[NSString stringWithFormat:@"%@htmlContent.html", path]]) {
-        [self configureView];
-    }
-    return YES;
-}
-
-- (void)webView:(UIWebView *)webview didFailLoadWithError:(NSError *)error
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-    NSString *errormsg = [NSString stringWithFormat:@"<html><center><font size=+4 color='red'>An error occured :<br>%@</font></center></html>", error.localizedDescription];
-    [self.Details loadHTMLString:[self createHTML:errormsg] baseURL:nil];
-}
-
 - (NSString *)createHTML:(NSString *)htmlContent
 {
     NSString *html = [NSString stringWithFormat:@"<!DOCTYPE>"
@@ -205,7 +193,7 @@
     BOOL success = false;
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *error = [[NSError alloc] init];
-    NSString *path = [NSString stringWithFormat:@"%@htmlContent.html", APPLICATION_SUPPORT_PATH];
+    NSString *path = [NSString stringWithFormat:@"%@%@.html", APPLICATION_SUPPORT_PATH, self.detailItem];
     NSData *content = [html dataUsingEncoding:NSUTF8StringEncoding];
     success = [fileManager createFileAtPath:path contents:content attributes:nil];
     if (!success) {
@@ -224,6 +212,38 @@
     // Pass the selected object to the new view controller.
 }
 */
+
+#pragma mark - Web View
+- (void)webViewDidStartLoad:(UIWebView *)webView
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    
+}
+- (void)webViewDidFinishLoad:(UIWebView *)webView
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+}
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    NSLog(@"Query = %@", [request.URL query]);
+    
+    if (![[request.URL query] isEqual:self.detailItem]) {
+        [self configureView];
+    }
+    else {
+        Menu = [[MenuViewController alloc]init];
+        [Menu setPageId:[request.URL query]];
+    }
+    return YES;
+}
+
+- (void)webView:(UIWebView *)webview didFailLoadWithError:(NSError *)error
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+    NSString *errormsg = [NSString stringWithFormat:@"<html><center><font size=+4 color='red'>An error occured :<br>%@</font></center></html>", error.localizedDescription];
+    [self.Details loadHTMLString:[self createHTML:errormsg] baseURL:nil];
+}
 
 #pragma mark - Alert View
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex

@@ -18,21 +18,41 @@
     NSString *errorMsg;
     NSMutableDictionary *application;
     NSMutableArray *allPages;
-    NSMutableDictionary *page;
     NSMutableArray *appDependencies;
     NSMutableArray *pageDependencies;
 }
 
-
 - (void)awakeFromNib
 {
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        self.clearsSelectionOnViewWillAppear = NO;
-        self.preferredContentSize = CGSizeMake(320.0, 600.0);
-    }
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(settingDidChange:) name:kIASKAppSettingChanged object:nil];
     [super awakeFromNib];
 }
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    return YES;
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    //[[segue destinationViewController] setDetailItem:page];
+}
+
+- (void)setPageId:(id)NewPageId
+{
+    if (_PageId != NewPageId) {
+        _PageId = NewPageId;
+        
+        // Update the view.
+        [self configureView];
+    }
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -49,7 +69,12 @@
         if (appDel.isDownloadedByNetwork || appDel.isDownloadedByFile) {
             NSError *error = [[NSError alloc] init];
             application = (NSMutableDictionary *)[NSJSONSerialization JSONObjectWithData:APPLICATION_FILE options:NSJSONReadingMutableLeaves error:&error];
-            if (!application) {
+            if (application) {
+                appDependencies = [application objectForKey:@"Dependencies"];
+                allPages = [application objectForKey:@"Pages"];
+                [self configureView];
+            }
+            else {
                 NSLog(@"An error occured during the Loading of the Application : %@", error);
                 // throw exception
                 NSException *e = [NSException exceptionWithName:error.localizedDescription reason:error.localizedFailureReason userInfo:error.userInfo];
@@ -71,86 +96,28 @@
         UIAlertView *alertNoConnection = [[UIAlertView alloc] initWithTitle:@"Application fails" message:errorMsg delegate:self cancelButtonTitle:@"Quit" otherButtonTitles:nil];
         [alertNoConnection show];
     }
-    
-    // Get all pages of the application
-    if ([application objectForKey:@"Pages"]) {
-        allPages = [application objectForKey:@"Pages"];
-    }
-    
-    if ([application objectForKey:@"Name"]) {
-        self.navigationItem.title = [application objectForKey:@"Name"];
-    }
-    
-    // Get Application's Dependencies
-    @try {
-        NSError *error = [[NSError alloc] init];
-        application = (NSMutableDictionary *)[NSJSONSerialization JSONObjectWithData:APPLICATION_FILE options:NSJSONReadingMutableLeaves error:&error];
-        if (!application) {
-            NSLog(@"An error occured during the Deserialization of Application file : %@", error);
-            // Throw exception
-            NSException *e = [NSException exceptionWithName:error.localizedDescription reason:error.localizedFailureReason userInfo:error.userInfo];
-            @throw e;
-        }
-        else {
-            if ([application objectForKey:@"Dependencies"]) {
-                appDependencies = [application objectForKey:@"Dependencies"];
-                [self configureView];
-                self.navigationItem.backBarButtonItem.title = [application objectForKey:@"Name"];
-            }
-        }
-    }
-    @catch  (NSException *e) {
-        errorMsg = [NSString stringWithFormat:@"An error occured during the Loading of the Application : %@, reason : %@", e.name, e.reason];
-        UIAlertView *alertNoConnection = [[UIAlertView alloc] initWithTitle:@"Application fails" message:errorMsg delegate:self cancelButtonTitle:@"Quit" otherButtonTitles:nil];
-        [alertNoConnection show];
-    }
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    return YES;
-}
-
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-        //[[segue destinationViewController] setDetailItem:page];
 }
 
 - (void)configureView
 {
-    // Update the user interface for the detail item.
-    
-    if (self.detailItem) {
-        // Get Page's Dependencies
-        if ([self.detailItem objectForKey:@"Dependencies"]) {
-            pageDependencies = [self.detailItem objectForKey:@"Dependencies"];
-        }
-        
-        // Load Content in the WebView
-        if ([self.detailItem objectForKey:@"HtmlContent"]) {
-            // Contact page already contains all Html.
-            if ([[self.detailItem objectForKey:@"Name"] isEqualToString:@"Contact"]) {
-                [self.Menu loadHTMLString:[self.detailItem objectForKey:@"HtmlContent"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+    // Update the user interface for the Menu item.
+    if (allPages) {
+        for (NSMutableDictionary *page in allPages) {
+            if ([[page objectForKey:@"isMenu"] isEqualToString:@"TRUE"]) {
+                if (!_PageId) {
+                    _PageId = [page objectForKey:@"Id"];
+                }
+                // Get Menu's Dependencies
+                pageDependencies = [page objectForKey:@"Dependencies"];
+                // Load Menu in the WebView
+                if ([page objectForKey:@"HtmlContent"]) {
+                    [self.Menu loadHTMLString:[self createHTML:[page objectForKey:@"HtmlContent"]] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+                }
+                else {
+                    [self.Menu loadHTMLString:[self createHTML:@"<center><font color='blue'>There is no content</font></center>"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
+                }
+                self.AppName.text = [page objectForKey:@"Name"];
             }
-            else {
-                [self.Menu loadHTMLString:[self createHTML:[self.detailItem objectForKey:@"HtmlContent"]] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
-            }
-        }
-        else {
-            [self.Menu loadHTMLString:[self createHTML:@"<center><font color='blue'>There is no content</font></center>"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
-        }
-        
-        // Set Page's title
-        if (![self.detailItem objectForKey:@"Name"]) {
-            self.navigationItem.title = @"No Name property";
-        }
-        else {
-            self.navigationItem.title = [self.detailItem objectForKey:@"Name"];
         }
     }
 }
@@ -215,35 +182,6 @@
     return files;
 }
 
-#pragma mark - Web View
-- (void)webViewDidStartLoad:(UIWebView *)webView
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    
-}
-- (void)webViewDidFinishLoad:(UIWebView *)webView
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-}
-
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-    NSLog(@"fragment = %@", [request.URL fragment]);
-    NSString *path = [APPLICATION_SUPPORT_PATH stringByReplacingOccurrencesOfString:@" " withString:@"\%20"];
-    NSLog(@"Path = %@", path);
-    if ([[request.URL fragment] isEqualToString:[NSString stringWithFormat:@"%@htmlContent.html", path]]) {
-        [self configureView];
-    }
-    return YES;
-}
-
-- (void)webView:(UIWebView *)webview didFailLoadWithError:(NSError *)error
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-    NSString *errormsg = [NSString stringWithFormat:@"<html><center><font size=+4 color='red'>An error occured :<br>%@</font></center></html>", error.localizedDescription];
-    [self.Menu loadHTMLString:[self createHTML:errormsg] baseURL:nil];
-}
-
 - (NSString *)createHTML:(NSString *)htmlContent
 {
     NSString *html = [NSString stringWithFormat:@"<!DOCTYPE>"
@@ -262,13 +200,48 @@
     BOOL success = false;
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *error = [[NSError alloc] init];
-    NSString *path = [NSString stringWithFormat:@"%@htmlContent.html", APPLICATION_SUPPORT_PATH];
+    NSString *path = [NSString stringWithFormat:@"%@%@.html", APPLICATION_SUPPORT_PATH, _PageId];
     NSData *content = [html dataUsingEncoding:NSUTF8StringEncoding];
     success = [fileManager createFileAtPath:path contents:content attributes:nil];
     if (!success) {
         NSLog(@"An error occured during the Saving of the html file : %@", error);
     }
     return html;
+}
+
+#pragma mark - Web View
+- (void)webViewDidStartLoad:(UIWebView *)webView
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    
+}
+- (void)webViewDidFinishLoad:(UIWebView *)webView
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+}
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    NSLog(@"fragment = %@", [request.URL fragment]);
+    NSString *path = [APPLICATION_SUPPORT_PATH stringByReplacingOccurrencesOfString:@" " withString:@"\%20"];
+    NSLog(@"Path = %@", path);
+    
+    // Test what item's menu is clicked for redirecting to the good page
+    if ([[request.URL query] isEqual:_PageId]) {
+        [self configureView];
+    }
+    else {
+        self.showDetails = [[DetailsViewController alloc] init];
+        [self.showDetails setDetailItem:[request.URL query]];
+    }
+    return YES;
+}
+
+- (void)webView:(UIWebView *)webview didFailLoadWithError:(NSError *)error
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+    NSString *errormsg = [NSString stringWithFormat:@"<html><center><font size=+4 color='red'>An error occured :<br>%@</font></center></html>", error.localizedDescription];
+    [self.Menu loadHTMLString:[self createHTML:errormsg] baseURL:nil];
 }
 
 #pragma mark - Alert View
