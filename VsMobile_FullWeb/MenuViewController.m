@@ -15,6 +15,7 @@
 @end
 
 @implementation MenuViewController {
+    NSString *queryString;
     NSString *errorMsg;
     NSMutableDictionary *application;
     NSMutableArray *allPages;
@@ -34,31 +35,22 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    return YES;
-}
-
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    //[[segue destinationViewController] setDetailItem:page];
-}
-
 - (void)setPageId:(id)NewPageId
 {
     if (_PageId != NewPageId) {
         _PageId = NewPageId;
         
         // Update the view.
-        [self configureView];
+        [self viewDidLoad];
     }
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.Menu.delegate = self;
 	// Do any additional setup after loading the view, typically from a nib.
-    NSLog(@"The current device is : %@", [UIDevice currentDevice].model);
+    self.Menu.delegate = self;
+    self.navigationItem.hidesBackButton = YES;
     
     AppDelegate *appDel = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     NSLog(@"Dl by Network : %hhd", appDel.isDownloadedByNetwork);
@@ -69,9 +61,17 @@
         if (appDel.isDownloadedByNetwork || appDel.isDownloadedByFile) {
             NSError *error = [[NSError alloc] init];
             application = (NSMutableDictionary *)[NSJSONSerialization JSONObjectWithData:APPLICATION_FILE options:NSJSONReadingMutableLeaves error:&error];
-            if (application) {
+            if (application != nil) {
                 appDependencies = [application objectForKey:@"Dependencies"];
                 allPages = [application objectForKey:@"Pages"];
+                // Set PageId
+                for (NSMutableDictionary *page in allPages) {
+                    if ([[page objectForKey:@"TemplateType"] isEqualToString:@"Menu"]) {
+                        if (!_PageId) {
+                            _PageId = [page objectForKey:@"Id"];
+                        }
+                    }
+                }
                 [self configureView];
             }
             else {
@@ -101,112 +101,51 @@
 - (void)configureView
 {
     // Update the user interface for the Menu item.
-    if (allPages) {
-        for (NSMutableDictionary *page in allPages) {
-            if ([[page objectForKey:@"isMenu"] isEqualToString:@"TRUE"]) {
-                if (!_PageId) {
-                    _PageId = [page objectForKey:@"Id"];
-                }
-                // Get Menu's Dependencies
-                pageDependencies = [page objectForKey:@"Dependencies"];
-                // Load Menu in the WebView
-                if ([page objectForKey:@"HtmlContent"]) {
-                    [self.Menu loadHTMLString:[self createHTML:[page objectForKey:@"HtmlContent"]] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
-                }
-                else {
-                    [self.Menu loadHTMLString:[self createHTML:@"<center><font color='blue'>There is no content</font></center>"] baseURL:[NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH]];
-                }
-                self.AppName.text = [page objectForKey:@"Name"];
-            }
-        }
-    }
-}
-
-- (NSMutableString *) addFiles
-{
-    NSMutableString *files;
-    
-    // INFO : ExtensionType is necessary when fileName does not contain an extension (i.e. js, css, json, ...). That's why it is commented
-    if (appDependencies) {
-        for (NSMutableDictionary *appDep in appDependencies) {
-            if (![[appDep objectForKey:@"Name"] isKindOfClass:[NSNull class]] && ![[appDep objectForKey:@"Type"] isKindOfClass:[NSNull class]]) {
-                //NSString *fileName = [NSString stringWithFormat:@"%@.%@", [appDep objectForKey:@"Name"], [AppDelegate extensionType:[appDep objectForKey:@"Type"]]];
-                NSString *fileName = [NSString stringWithFormat:@"%@", [appDep objectForKey:@"Name"]];
-                if ([[appDep objectForKey:@"Type"] isEqualToString:@"script"]) {
-                    NSString *add = [NSString stringWithFormat:@"<script src='%@' type='text/javascript'></script>", fileName];
-                    if (files) {
-                        files = [NSMutableString stringWithFormat:@"%@%@", files, add];
-                    } else {
-                        files = (NSMutableString *)[NSString stringWithString:add];
-                    }
-                }
-                if ([[appDep objectForKey:@"Type"] isEqualToString:@"style"]) {
-                    NSString *add = [NSString stringWithFormat:@"<link type='text/css' rel='stylesheet' href='%@'></link>", fileName];
-                    if (files) {
-                        files = [NSMutableString stringWithFormat:@"%@%@", files, add];
-                    } else {
-                        files = (NSMutableString *)[NSString stringWithString:add];
-                    }
-                }
-            }
-        }
-    }
-    if (pageDependencies) {
-        for (NSMutableDictionary *pageDep in pageDependencies) {
-            if (![[pageDep objectForKey:@"Name"] isKindOfClass:[NSNull class]] && ![[pageDep objectForKey:@"Type"] isKindOfClass:[NSNull class]]) {
-                //NSString *fileName = [NSString stringWithFormat:@"%@.%@", [pageDep objectForKey:@"Name"], [AppDelegate extensionType:[pageDep objectForKey:@"Type"]]];
-                NSString *fileName = [NSString stringWithFormat:@"%@", [pageDep objectForKey:@"Name"]];
-                if (![[pageDep objectForKey:@"Path"] isKindOfClass:[NSNull class]]) {
-                    fileName = [NSString stringWithFormat:@"%@/%@", [pageDep objectForKey:@"Path"], [pageDep objectForKey:@"Name"]];
-                }
-                if ([[pageDep objectForKey:@"Type"] isEqualToString:@"script"]) {
-                    NSString *add = [NSString stringWithFormat:@"<script src='%@' type='text/javascript'></script>", fileName];
-                    if (files) {
-                        files = [NSMutableString stringWithFormat:@"%@%@", files, add];
-                    } else {
-                        files = (NSMutableString *)[NSString stringWithString:add];
+    if (_PageId != nil) {
+        @try {
+            for (NSMutableDictionary *page in allPages) {
+                if ([[page objectForKey:@"TemplateType"] isEqualToString:@"Menu"]) {
+                    if (!_PageId) {
+                        _PageId = [page objectForKey:@"Id"];
                     }
                     
-                }
-                if ([[pageDep objectForKey:@"Type"] isEqualToString:@"style"]) {
-                    NSString *add = [NSString stringWithFormat:@"<link type='text/css' rel='stylesheet' href='%@'></link>", fileName];
-                    if (files) {
-                        files = [NSMutableString stringWithFormat:@"%@%@", files, add];
-                    } else {
-                        files = (NSMutableString *)[NSString stringWithString:add];
+                    // Get Menu's Dependencies
+                    if ([page objectForKey:@"Dependencies"] != [NSNull null]) {
+                        pageDependencies = [page objectForKey:@"Dependencies"];
                     }
+
+                    NSURL *url = [NSURL fileURLWithPath:APPLICATION_SUPPORT_PATH isDirectory:YES];
+                    // Load Menu in the WebView
+                    if ([page objectForKey:@"HtmlContent"] != [NSNull null]) {
+                        NSString *content = [AppDelegate createHTMLwithContent:[page objectForKey:@"HtmlContent"] withAppDep:appDependencies withPageDep:pageDependencies];
+                        // Save HtmlContent in file
+                        BOOL success = false;
+                        NSFileManager *fileManager = [NSFileManager defaultManager];
+                        NSError *error = [[NSError alloc] init];
+                        NSString *path = [NSString stringWithFormat:@"%@index.html", APPLICATION_SUPPORT_PATH];
+                        NSData *data = [content dataUsingEncoding:NSUTF8StringEncoding];
+                        success = [fileManager createFileAtPath:path contents:data attributes:nil];
+                        if (!success) {
+                            NSLog(@"An error occured during the Saving of the html file : %@", error);
+                            NSException *e = [NSException exceptionWithName:error.localizedDescription reason:error.localizedFailureReason userInfo:error.userInfo];
+                            @throw e;
+                        }
+                        
+                        [self.Menu loadHTMLString:content baseURL:url];
+                    }
+                    else {
+                        [self.Menu loadHTMLString:[AppDelegate createHTMLwithContent:@"<center><font color='blue'>There is no content</font></center>" withAppDep:nil withPageDep:nil] baseURL:url];
+                    }
+                    self.navigationItem.title = [page objectForKey:@"Title"];
                 }
             }
         }
+        @catch (NSException *exception) {
+            errorMsg = [NSString stringWithFormat:@"An error occured during the Configuration of the view '%@' : %@, reason : %@", _PageId, exception.name, exception.reason];
+            UIAlertView *alertNoConnection = [[UIAlertView alloc] initWithTitle:@"Application fails" message:errorMsg delegate:self cancelButtonTitle:@"Quit" otherButtonTitles:nil];
+            [alertNoConnection show];
+        }
     }
-    return files;
-}
-
-- (NSString *)createHTML:(NSString *)htmlContent
-{
-    NSString *html = [NSString stringWithFormat:@"<!DOCTYPE>"
-                      "<html>"
-                      "<head>"
-                      "%@"
-                      "</head>"
-                      "<body>"
-                      "<div id='Main' style='padding:10px;'>"
-                      "%@"
-                      "</body>"
-                      "</head>"
-                      "</html>"
-                      , [self addFiles], htmlContent];
-    
-    BOOL success = false;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSError *error = [[NSError alloc] init];
-    NSString *path = [NSString stringWithFormat:@"%@%@.html", APPLICATION_SUPPORT_PATH, _PageId];
-    NSData *content = [html dataUsingEncoding:NSUTF8StringEncoding];
-    success = [fileManager createFileAtPath:path contents:content attributes:nil];
-    if (!success) {
-        NSLog(@"An error occured during the Saving of the html file : %@", error);
-    }
-    return html;
 }
 
 #pragma mark - Web View
@@ -222,26 +161,44 @@
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    NSLog(@"fragment = %@", [request.URL fragment]);
-    NSString *path = [APPLICATION_SUPPORT_PATH stringByReplacingOccurrencesOfString:@" " withString:@"\%20"];
-    NSLog(@"Path = %@", path);
+    NSLog(@"Query = %@", [request.URL query]);
+    NSLog(@"Absolute string : %@   Absolute Url : %@", [request.URL absoluteString], [request.URL absoluteURL]);
+    NSLog(@"Relative string : %@   Relative Path : %@", [request.URL relativeString], [request.URL relativePath]);
+    NSLog(@"Path url : %@", [request.URL path]);
     
-    // Test what item's menu is clicked for redirecting to the good page
-    if ([[request.URL query] isEqual:_PageId]) {
-        [self configureView];
+    int index = [APPLICATION_SUPPORT_PATH length] - 1;
+    NSString *path = [APPLICATION_SUPPORT_PATH substringToIndex:index];
+    NSLog(@"Path modifié = %@", path);
+    
+    if ([[request.URL relativePath] isEqualToString:path]) {
+        // First loading
+        return YES;
+    } else if ([[request.URL relativePath] isEqualToString:[NSString stringWithFormat:@"%@index.html", APPLICATION_SUPPORT_PATH]]) {
+        return YES;
+    } else if ([request.URL query] != nil) {
+        queryString = [request.URL query];
+        self.showDetails = [self.storyboard instantiateViewControllerWithIdentifier:@"detailsView"];
+        self.showDetails.detailItem = queryString;
+        [self.showDetails setGoBack:_PageId];
+        [self.navigationController pushViewController:self.showDetails animated:YES];
+        return YES;
     }
-    else {
-        self.showDetails = [[DetailsViewController alloc] init];
-        [self.showDetails setDetailItem:[request.URL query]];
-    }
-    return YES;
+    return NO;
 }
 
 - (void)webView:(UIWebView *)webview didFailLoadWithError:(NSError *)error
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-    NSString *errormsg = [NSString stringWithFormat:@"<html><center><font size=+4 color='red'>An error occured :<br>%@</font></center></html>", error.localizedDescription];
-    [self.Menu loadHTMLString:[self createHTML:errormsg] baseURL:nil];
+    errorMsg = [NSString stringWithFormat:@"<html><center><font size=+4 color='red'>An error occured :<br>%@</font></center></html>", error.localizedDescription];
+    [self.Menu loadHTMLString:[AppDelegate createHTMLwithContent:errorMsg withAppDep:nil withPageDep:nil] baseURL:nil];
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([[segue identifier] isEqualToString:@"changeView"]) {
+        DetailsViewController *details = (DetailsViewController *)[[segue destinationViewController] visibleViewController];
+        [details setDetailItem:queryString];
+    }
 }
 
 #pragma mark - Alert View
@@ -266,6 +223,7 @@
         [self presentViewController:self animated:YES completion:nil];
     }];
     // your code here to reconfigure the app for changed settings
+    [self configureView];
 }
 
 #pragma mark kIASKAppSettingChanged notification

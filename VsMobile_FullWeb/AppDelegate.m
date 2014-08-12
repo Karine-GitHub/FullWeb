@@ -57,43 +57,65 @@ NSString *APPLICATION_SUPPORT_PATH;
     return isFast;
 }
 
-// INFO : ExtensionType is necessary when fileName does not contain an extension (i.e. js, css, json, ...)
-- (void) saveFile:(NSString *)url fileName:(NSString *)fileName extensionType:(NSString *)extensionType dirName:(NSString*)dirName
+- (void) saveFile:(NSString *)url fileName:(NSString *)fileName dirName:(NSString*)dirName
 {
     @try {
-        url = [url stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        fileName = [fileName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        extensionType = [extensionType stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        BOOL success = false;
-        //NSString *path = [NSString stringWithFormat:@"%@%@.%@", APPLICATION_SUPPORT_PATH, fileName, [AppDelegate extensionType:extensionType]];
-        NSString *path = [NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, fileName];
-        
-        // Create Template's page directory when dependency is for a page
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSError *error = [[NSError alloc] init];
-        if (![dirName isKindOfClass:[NSNull class]]) {
-            dirName = [dirName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-            BOOL isDirectory;
-            path = [NSString stringWithFormat:@"%@%@/%@", APPLICATION_SUPPORT_PATH, dirName, fileName];
-            if (![fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, dirName] isDirectory:&isDirectory]) {
-                success = [fileManager createDirectoryAtPath:[NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, dirName] withIntermediateDirectories:YES attributes:nil error:&error];
+        if (![url isKindOfClass:[NSNull class]] && ![fileName isKindOfClass:[NSNull class]]) {
+            url = [url stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            fileName = [fileName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            
+            BOOL success = false;
+            NSString *path = [NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, fileName];
+            
+            // Create Template's page directory when dependency is for a page
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            NSError *error = [[NSError alloc] init];
+            
+            if (![dirName isKindOfClass:[NSNull class]]) {
+                dirName = [dirName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                BOOL isDirectory;
+                // Manipulate dirName for creating directories
+                NSString *search = @"/";
+                NSRange getDir = [dirName rangeOfString:search];
+                if (getDir.location != NSNotFound) {
+                    // Several directories
+                    NSString *firstDir = [dirName substringToIndex:getDir.location];
+                    NSString *sndDir = [dirName substringFromIndex:getDir.location];
+                    if (![fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, firstDir] isDirectory:&isDirectory]) {
+                        success = [fileManager createDirectoryAtPath:[NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, firstDir] withIntermediateDirectories:YES attributes:nil error:&error];
+                        if (!success) {
+                            NSLog(@"An error occured during the Creation of Template folder : %@", error);
+                        }
+                        else {
+                            if (![fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@%@", APPLICATION_SUPPORT_PATH, firstDir, sndDir] isDirectory:&isDirectory]) {
+                                success = [fileManager createDirectoryAtPath:[NSString stringWithFormat:@"%@%@%@", APPLICATION_SUPPORT_PATH, firstDir, sndDir] withIntermediateDirectories:YES attributes:nil error:&error];
+                                if (!success) {
+                                    NSLog(@"An error occured during the Creation of Template folder : %@", error);
+                                }
+                            }
+                        }
+                    }
+                    path = [NSString stringWithFormat:@"%@%@%@/%@", APPLICATION_SUPPORT_PATH, firstDir, sndDir, fileName];
+                } else {
+                    // Only one directory
+                    path = [NSString stringWithFormat:@"%@%@/%@", APPLICATION_SUPPORT_PATH, dirName, fileName];
+                    if (![fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, dirName] isDirectory:&isDirectory]) {
+                        success = [fileManager createDirectoryAtPath:[NSString stringWithFormat:@"%@%@", APPLICATION_SUPPORT_PATH, dirName] withIntermediateDirectories:YES attributes:nil error:&error];
+                        if (!success) {
+                            NSLog(@"An error occured during the Creation of Template folder : %@", error);
+                        }
+                    }
+                }
+            }
+            
+            NSURL *location = [NSURL URLWithString:url];
+            if (![fileManager fileExistsAtPath:path]) {
+                success =[[NSData dataWithContentsOfURL:location] writeToFile:path options:NSDataWritingAtomic error:&error];
                 if (!success) {
-                    NSLog(@"An error occured during the Creation of Template folder : %@", error);
+                    NSLog(@"An error occured during the Saving of the file %@ : %@", fileName, error);
                 }
             }
         }
-        //if ([AppDelegate extensionType:extensionType]) {
-        NSURL *location = [NSURL URLWithString:url];
-        if (![fileManager fileExistsAtPath:path]) {
-            success =[[NSData dataWithContentsOfURL:location] writeToFile:path options:NSDataWritingAtomic error:&error];
-            if (!success) {
-                NSLog(@"An error occured during the Saving of the file %@ : %@", fileName, error);
-            }
-        }
-        //}
-        //else {
-        //NSLog(@"An error occured during the Saving of the file %@ : the extension %@ is not supported yet !", fileName, extensionType);
-        //}
     }
     @catch (NSException *e) {
         NSLog(@"An error occured during the Loading of the file %@ : %@, reason : %@", fileName, e.name, e.reason);
@@ -107,35 +129,30 @@ NSString *APPLICATION_SUPPORT_PATH;
 
 - (void) searchDependencies
 {
-    if (![[self.application objectForKey:@"Dependencies"] isKindOfClass:[NSNull class]]) {
-        if ([self.application objectForKey:@"Dependencies"]) {
-            for (NSMutableDictionary *allAppDep in [self.application objectForKey:@"Dependencies"]) {
-                if ([allAppDep objectForKey:@"Url"] && [allAppDep objectForKey:@"Name"] /*&& [allAppDep objectForKey:@"Type"]*/) {
-                    if ([allAppDep objectForKey:@"Path"]) {
-                        [self saveFile:[allAppDep objectForKey:@"Url"] fileName:[allAppDep objectForKey:@"Name"] extensionType:[allAppDep objectForKey:@"Type"] dirName:[allAppDep objectForKey:@"Path"]];
-                    }
-                    else {
-                        [self saveFile:[allAppDep objectForKey:@"Url"] fileName:[allAppDep objectForKey:@"Name"] extensionType:[allAppDep objectForKey:@"Type"] dirName:nil];
-                    }
+    if ([self.application objectForKey:@"Dependencies"] != [NSNull null]) {
+        for (NSMutableDictionary *allAppDep in [self.application objectForKey:@"Dependencies"]) {
+            if ([allAppDep objectForKey:@"Url"] != [NSNull null] && [allAppDep objectForKey:@"Name"] != [NSNull null]) {
+                [self saveFile:[allAppDep objectForKey:@"Url"] fileName:[allAppDep objectForKey:@"Name"] dirName:[allAppDep objectForKey:@"Path"]];
+            }
+            else {
+                NSLog(@"An error occured during the Search of Application's dependencies. For %@ : one or more parameters are null !", [allAppDep objectForKey:@"Name"]);
+            }
+        }
+    }
+    if ([self.application objectForKey:@"Pages"] != [NSNull null]) {
+        for (NSMutableDictionary *allPages in [self.application objectForKey:@"Pages"]) {
+            for (NSMutableDictionary *allPageDep in [allPages objectForKey:@"Dependencies"]) {
+                if ([allPageDep objectForKey:@"Url"] != [NSNull null] && [allPageDep objectForKey:@"Name"] != [NSNull null]) {
+                    [self saveFile:[allPageDep objectForKey:@"Url"] fileName:[allPageDep objectForKey:@"Name"]dirName:[allPageDep objectForKey:@"Path"]];
                 }
                 else {
-                    NSLog(@"An error occured during the Search of Application's dependencies. For %@ : one or more parameters are null !", [allAppDep objectForKey:@"Name"]);
+                    NSLog(@"An error occured during the Search of %@'s dependencies : one or more parameters are null !", [allPages objectForKey:@"Name"]);
                 }
             }
-            // INFO : ExtensionType is necessary when fileName does not contain an extension (i.e. js, css, json, ...). That's why it is commented
-            for (NSMutableDictionary *allPages in [self.application objectForKey:@"Pages"]) {
-                for (NSMutableDictionary *allPageDep in [allPages objectForKey:@"Dependencies"]) {
-                    if (![[allPageDep objectForKey:@"Url"] isKindOfClass:[NSNull class]] && ![[allPageDep objectForKey:@"Name"] isKindOfClass:[NSNull class]] /*&& [allPageDep objectForKey:@"Type"]*/) {
-                        if (![[allPageDep objectForKey:@"Path"]  isKindOfClass:[NSNull class]]) {
-                            [self saveFile:[allPageDep objectForKey:@"Url"] fileName:[allPageDep objectForKey:@"Name"] extensionType:[allPageDep objectForKey:@"Type"] dirName:[allPageDep objectForKey:@"Path"]];
-                        }
-                        else {
-                            [self saveFile:[allPageDep objectForKey:@"Url"] fileName:[allPageDep objectForKey:@"Name"] extensionType:[allPageDep objectForKey:@"Type"] dirName:nil];
-                        }
-                    }
-                    else {
-                        NSLog(@"An error occured during the Search of %@'s dependencies : one or more parameters are null !", [allPages objectForKey:@"Name"]);
-                    }
+            if ([allPages objectForKey:@"LogoUrl"] != [NSNull null]) {
+            for (NSMutableDictionary *allPageImages in [allPages objectForKey:@"LogoUrl"]) {
+                // Loading images
+                    [self saveFile:[allPageImages objectForKey:@"LogoUrl"] fileName:[allPages objectForKey:@"Name"] dirName:@"Images"];
                 }
             }
         }
@@ -159,6 +176,69 @@ NSString *APPLICATION_SUPPORT_PATH;
     return extension;
 }
 
++ (NSMutableString *) addFiles:(NSArray *)dependencies
+{
+    NSMutableString *files;
+    NSString *fileName;
+    
+    if (![dependencies isKindOfClass:[NSNull class]]) {
+        for (NSMutableDictionary *appDep in dependencies) {
+            if ([appDep objectForKey:@"Name"] != [NSNull null]) {
+                if ([appDep objectForKey:@"Path"] == [NSNull null]) {
+                    fileName = [NSString stringWithFormat:@"%@", [appDep objectForKey:@"Name"]];
+                } else {
+                    fileName = [NSString stringWithFormat:@"%@/%@", [appDep objectForKey:@"Path"], [appDep objectForKey:@"Name"]];
+                }
+                if ([[appDep objectForKey:@"Type"] isEqualToString:@"script"]) {
+                    NSString *add = [NSString stringWithFormat:@"<script src='%@' type='text/javascript'></script>", fileName];
+                    if (files) {
+                        files = [NSMutableString stringWithFormat:@"%@%@", files, add];
+                    } else {
+                        files = (NSMutableString *)[NSString stringWithString:add];
+                    }
+                }
+                if ([[appDep objectForKey:@"Type"] isEqualToString:@"style"]) {
+                    NSString *add = [NSString stringWithFormat:@"<link type='text/css' rel='stylesheet' href='%@'></link>", fileName];
+                    if (files) {
+                        files = [NSMutableString stringWithFormat:@"%@%@", files, add];
+                    } else {
+                        files = (NSMutableString *)[NSString stringWithString:add];
+                    }
+                }
+            }
+        }
+    }
+    return files;
+}
+
++ (NSString *)createHTMLwithContent:(NSString *)htmlContent withAppDep:(NSArray *)appDep withPageDep:(NSArray *)pageDep
+{
+    NSString *html;
+    if (htmlContent) {
+        NSMutableString *add;
+        if (appDep && pageDep) {
+            add = [NSMutableString stringWithFormat:@"%@%@", [AppDelegate addFiles:appDep], [AppDelegate addFiles:pageDep]];
+        }
+        else {
+            add = [NSMutableString stringWithString:@""];
+        }
+        html = [NSString stringWithFormat:@"<!DOCTYPE>"
+                          "<html>"
+                          "<head>"
+                          "%@"
+                          "</head>"
+                          "<body>"
+                          "<div id='Main' style='padding:10px;'>"
+                          "%@"
+                          "</body>"
+                          "</head>"
+                          "</html>"
+                          , add, htmlContent];
+        
+    }
+
+    return html;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -181,7 +261,7 @@ NSString *APPLICATION_SUPPORT_PATH;
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *error = [[NSError alloc] init];
     NSURL *appliSupportDir = [fileManager URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&error];
-    if (appliSupportDir) {
+    if (appliSupportDir != nil) {
         [appliSupportDir URLByAppendingPathComponent:bundle isDirectory:YES];
     }
     else {
@@ -220,16 +300,16 @@ NSString *APPLICATION_SUPPORT_PATH;
         else {
             NSLog(@"File exists");
             APPLICATION_FILE = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:&error];
-            if (APPLICATION_FILE) {
+            if (APPLICATION_FILE != nil) {
                 _isDownloadedByFile = true;
             }
             else {
                 NSLog(@"An error occured during the Loading of Application File : %@", error);
             }
         }
-        if (APPLICATION_FILE) {
+        if (APPLICATION_FILE != nil) {
             self.application = (NSMutableDictionary *)[NSJSONSerialization JSONObjectWithData:APPLICATION_FILE options:NSJSONReadingMutableLeaves error:&error];
-            if (self.application) {
+            if (self.application != nil) {
                 [self searchDependencies];
             }
             else {

@@ -2,9 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>ApplicationID</key>
+	<key>ApplicationID_OLD</key>
 	<string>79e45c6e-9e87-4576-b028-609ae2902f00</string>
-	<key>WebAPI</key>
+	<key>WebAPI_OLD</key>
 	<string>http://10.1.40.37/vsMobileAPI/api/application/</string>
+	<key>WebAPI</key>
+	<string>http://testapp:8087/api/application/</string>
+	<key>ApplicationID</key>
+	<string>79E45C6E-9E87-4576-B028-609AE2902F01</string>
 </dict>
 </plist>

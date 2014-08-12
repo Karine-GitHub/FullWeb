@@ -28,5 +28,7 @@ extern NSString *APPLICATION_SUPPORT_PATH;
 + (BOOL) testConnection;
 + (BOOL) testFastConnection;
 + (NSString *) extensionType:(NSString *)type;
++ (NSMutableString *) addFiles:(NSArray *)dependencies;
++ (NSString *)createHTMLwithContent:(NSString *)htmlContent withAppDep:(NSArray *)appDep withPageDep:(NSArray *)pageDep;
 
 @end
