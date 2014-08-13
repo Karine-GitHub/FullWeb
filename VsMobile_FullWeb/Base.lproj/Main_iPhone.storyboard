@@ -32,33 +32,57 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UND-tu-cLY">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="525"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="271"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <dataDetectorType key="dataDetectorTypes" phoneNumber="YES" link="YES" address="YES" calendarEvent="YES"/>
                             </webView>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="p6R-64-Ew0">
+                                <rect key="frame" x="137" y="429" width="46" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <segue destination="BTo-jS-7ra" kind="push" id="gMY-7N-9D4"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
-                    <toolbarItems>
-                        <barButtonItem image="20-gear2.png" style="done" id="fqU-83-Tjb">
-                            <connections>
-                                <segue destination="2TK-LT-wYv" kind="push" identifier="settings" id="Tge-ge-eKZ"/>
-                            </connections>
-                        </barButtonItem>
-                    </toolbarItems>
+                    <toolbarItems/>
                     <navigationItem key="navigationItem" id="ANC-6h-dks"/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <size key="freeformSize" width="320" height="568"/>
                     <connections>
                         <outlet property="Menu" destination="UND-tu-cLY" id="E2E-gc-hQ4"/>
-                        <outlet property="Settings" destination="fqU-83-Tjb" id="Wa9-gd-E5R"/>
                         <segue destination="eKa-zo-ohd" kind="push" identifier="changeView" id="JDg-Pw-U7o"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="254" y="497"/>
+        </scene>
+        <!--App Settings View Controller - Settings-->
+        <scene sceneID="J0c-yQ-0lh">
+            <objects>
+                <tableViewController id="BTo-jS-7ra" customClass="IASKAppSettingsViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" id="Peo-m1-Xb3">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <connections>
+                            <outlet property="dataSource" destination="BTo-jS-7ra" id="zWY-Es-MS3"/>
+                            <outlet property="delegate" destination="BTo-jS-7ra" id="Gyv-Hn-5Sd"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Settings" id="2BR-q1-cnR">
+                        <barButtonItem key="backBarButtonItem" title="Back" id="Fi3-qe-vEk"/>
+                    </navigationItem>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="wVB-q4-dhB" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="801" y="141"/>
         </scene>
         <!--Details View Controller-->
         <scene sceneID="V0S-WG-fxI">
@@ -90,29 +114,7 @@
             </objects>
             <point key="canvasLocation" x="803" y="812"/>
         </scene>
-        <!--App Settings View Controller-->
-        <scene sceneID="R7L-C3-MgT">
-            <objects>
-                <tableViewController id="2TK-LT-wYv" customClass="IASKAppSettingsViewController" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" id="2Ce-95-j0i">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
-                        <connections>
-                            <outlet property="dataSource" destination="2TK-LT-wYv" id="zes-ZD-BTq"/>
-                            <outlet property="delegate" destination="2TK-LT-wYv" id="5Lf-Cj-OzL"/>
-                        </connections>
-                    </tableView>
-                    <navigationItem key="navigationItem" id="MMm-39-JX5"/>
-                </tableViewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="K1j-T4-G7g" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="799" y="128"/>
-        </scene>
     </scenes>
-    <resources>
-        <image name="20-gear2.png" width="26" height="28"/>
-    </resources>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

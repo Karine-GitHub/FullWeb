@@ -15,6 +15,7 @@
 @end
 
 @implementation MenuViewController {
+    AppDelegate *appDel;
     NSString *queryString;
     NSString *errorMsg;
     NSMutableDictionary *application;
@@ -52,10 +53,10 @@
     self.Menu.delegate = self;
     self.navigationItem.hidesBackButton = YES;
     
-    AppDelegate *appDel = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    appDel = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     NSLog(@"Dl by Network : %hhd", appDel.isDownloadedByNetwork);
     NSLog(@"Dl by File : %hhd", appDel.isDownloadedByFile);
-    
+
     // Get Application json file
     @try {
         if (appDel.isDownloadedByNetwork || appDel.isDownloadedByFile) {
@@ -82,13 +83,23 @@
             }
         }
         else {
-            if (!appDel.isDownloadedByFile) {
-                errorMsg = @"Impossible to download content file. The application will shut down. Sorry for the inconvenience.";
-            } else if (!appDel.isDownloadedByNetwork) {
-                errorMsg = @"Impossible to download content on the server. The network connection is too low or off. The application will shut down. Please try later.";
-            }
-            UIAlertView *alertNoConnection = [[UIAlertView alloc] initWithTitle:@"Application fails" message:errorMsg delegate:self cancelButtonTitle:@"Quit" otherButtonTitles:nil];
-            [alertNoConnection show];
+            /*if (!appDel.synchroIsEnabled) {
+                errorMsg = @"Impossible to download content. The network connection is disabled. Please enable the synchronization.";
+                // Go to Settings view
+                self.appSettingsViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"settingsView"];
+                [self performSegueWithIdentifier:@"settings" sender:self.Settings];
+                self.appSettingsViewController = [[IASKAppSettingsViewController alloc] init];
+                [self.navigationController pushViewController:self.appSettingsViewController animated:YES];
+            } else {*/
+                if (!appDel.isDownloadedByFile) {
+                    errorMsg = @"Impossible to download content file. The application will shut down. Sorry for the inconvenience.";
+                } else if (!appDel.isDownloadedByNetwork) {
+                    errorMsg = @"Impossible to download content on the server. The network connection is too low or off. The application will shut down. Please try later.";
+                }
+                
+                UIAlertView *alertNoConnection = [[UIAlertView alloc] initWithTitle:@"Application fails" message:errorMsg delegate:self cancelButtonTitle:@"Quit" otherButtonTitles:nil];
+                [alertNoConnection show];
+            //}
         }
     }
     @catch (NSException *e) {
@@ -222,17 +233,24 @@
     [self.appSettingsViewController dismissViewControllerAnimated:YES completion:^{
         [self presentViewController:self animated:YES completion:nil];
     }];
-    // your code here to reconfigure the app for changed settings
-    [self configureView];
+    // Settings are checked every time the app is lauching
 }
 
 #pragma mark kIASKAppSettingChanged notification
 - (void)settingDidChange:(NSNotification*)notification {
-    /*if ([notification.object isEqual:@"AutoConnect"]) {
-     IASKAppSettingsViewController *activeController = self.tabBarController.selectedIndex ? self.tabAppSettingsViewController : self.appSettingsViewController;
+    if ([notification.object isEqual:@"AutoConnect"]) {
+     IASKAppSettingsViewController *activeController = self.tabBarController.selectedIndex ? self.appSettingsViewController : nil;
      BOOL enabled = (BOOL)[[notification.userInfo objectForKey:@"AutoConnect"] intValue];
      [activeController setHiddenKeys:enabled ? nil : [NSSet setWithObjects:@"AutoConnectLogin", @"AutoConnectPassword", nil] animated:YES];
-     }*/
+     }
+    if ([notification.object isEqual:@"enabled"]) {
+        [appDel setSynchroIsEnabled:[[notification.userInfo objectForKey:@"enabled"] boolValue]];
+    }
+    if ([notification.object isEqual:@"wifi"]) {
+        [appDel setSynchroOnlyWifi:[[notification.userInfo objectForKey:@"wifi"] boolValue]];
+    }
+    if ([notification.object isEqual:@"frequency"]) {
+        [appDel setFrequency:(NSInteger *)[[notification.userInfo objectForKey:@"frequency"] intValue]];
+    }
 }
-
 @end

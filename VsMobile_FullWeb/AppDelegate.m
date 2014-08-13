@@ -16,7 +16,7 @@ NSString *APPLICATION_SUPPORT_PATH;
 
 @implementation AppDelegate
 
-+ (BOOL) testConnection
+- (BOOL) testConnection
 {
     // Set the host
     Reachability *checkConnection = [Reachability reachabilityWithHostName:@"10.1.40.37"];
@@ -24,24 +24,33 @@ NSString *APPLICATION_SUPPORT_PATH;
     NSLog(@"Network Status : %d", networkStatus);
     
     BOOL isConnected = false;
-    switch (networkStatus) {
-        case NotReachable:
-            isConnected = false;
-            break;
-        case ReachableViaWiFi:
-            isConnected = true;
-            break;
-        case ReachableViaWWAN:
-            isConnected = [self testFastConnection];
-            break;
-        default:
-            break;
+    // Check settings
+    if (self.synchroIsEnabled) {
+        switch (networkStatus) {
+            case NotReachable:
+                isConnected = false;
+                break;
+            case ReachableViaWiFi:
+                isConnected = true;
+                break;
+            case ReachableViaWWAN:
+                if (!self.synchroOnlyWifi) {
+                    isConnected = [self testFastConnection];
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    else {
+        self.isDownloadedByFile = false;
+        self.isDownloadedByNetwork = false;
     }
     
     return isConnected;
 }
 
-+ (BOOL) testFastConnection
+- (BOOL) testFastConnection
 {
     BOOL isFast = false;
     CTTelephonyNetworkInfo *info = [[CTTelephonyNetworkInfo alloc] init];
@@ -55,6 +64,48 @@ NSString *APPLICATION_SUPPORT_PATH;
     }
     
     return isFast;
+}
+
+// Register custom settings is necessary for accessing them. Set Version item dynamically.
+- (void) registerDefaultsFromSettingsBundle
+{
+    // Get Version number
+    NSString *versionNumber = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    //Get Settings.Bundle
+    NSString *settingsBundle = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
+    if (settingsBundle) {
+        // Get Root.plist file
+        NSDictionary *allPref = [NSDictionary dictionaryWithContentsOfFile:[settingsBundle stringByAppendingPathComponent:@"Root.plist"]];
+        // Get the Preferences Array
+        NSArray *prefArray = [allPref objectForKey:@"PreferenceSpecifiers"];
+        // Get all key/value pairs
+        NSMutableArray *modifiedPairs = [[NSMutableArray alloc] init];
+        for (NSDictionary *preference in prefArray) {
+            // Set Version value
+            if ([[preference objectForKey:@"DefaultValue"] isEqual:@"dynamicVersion"]) {
+                [preference setValue:versionNumber forKey:@"DefaultValue"];
+            }
+            [modifiedPairs addObject:preference];
+            // Choose items to put in Userdefaults : easiest to find by Identifier than DefaultValue
+            if ([preference objectForKey:@"Key"]) {
+                [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObject:[preference valueForKey:@"DefaultValue"] forKey:[preference objectForKey:@"Key"]]];
+            }
+        }
+        // Programatically modify the Root.plist file for saving Version Number
+        [allPref setValue:modifiedPairs forKey:@"PreferenceSpecifiers"];
+        NSFileManager *fm = [NSFileManager defaultManager];
+        [fm createFileAtPath:[settingsBundle stringByAppendingPathComponent:@"Root.plist"] contents:(NSData *)allPref attributes:nil];
+    }
+}
+
+- (void) getSettings
+{
+    NSLog(@"Syncho enabled = %hhd", [[[NSUserDefaults standardUserDefaults] objectForKey:@"enabled"] boolValue]);
+     NSLog(@"Syncho wifi enabled = %hhd", [[[NSUserDefaults standardUserDefaults] objectForKey:@"wifi"] boolValue]);
+     NSLog(@"Frequency = %ld", (long)[[[NSUserDefaults standardUserDefaults] objectForKey:@"frequency"] integerValue]);
+    self.synchroIsEnabled = [[[NSUserDefaults standardUserDefaults] objectForKey:@"enabled"] boolValue];
+    self.synchroOnlyWifi = [[[NSUserDefaults standardUserDefaults] objectForKey:@"wifi"] boolValue];
+    self.frequency = (NSInteger *)[[[NSUserDefaults standardUserDefaults] objectForKey:@"frequency"] integerValue];
 }
 
 - (void) saveFile:(NSString *)url fileName:(NSString *)fileName dirName:(NSString*)dirName
@@ -150,8 +201,8 @@ NSString *APPLICATION_SUPPORT_PATH;
                 }
             }
             if ([allPages objectForKey:@"LogoUrl"] != [NSNull null]) {
-            for (NSMutableDictionary *allPageImages in [allPages objectForKey:@"LogoUrl"]) {
-                // Loading images
+                for (NSMutableDictionary *allPageImages in [allPages objectForKey:@"LogoUrl"]) {
+                    // Loading images
                     [self saveFile:[allPageImages objectForKey:@"LogoUrl"] fileName:[allPages objectForKey:@"Name"] dirName:@"Images"];
                 }
             }
@@ -159,21 +210,95 @@ NSString *APPLICATION_SUPPORT_PATH;
     }
 }
 
-+ (NSString *) extensionType:(NSString *)type
+- (void) configureApp
 {
-    NSString *extension;
-    type = [type stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    [type lowercaseString];
-    if ([type isEqualToString:@"script"]) {
-        extension = @"js";
-    }
-    else if ([type isEqualToString:@"style"]) {
-        extension = @"css";
+#pragma Create the Application Support Folder. Not accessible by users
+    // NSHomeDirectory returns the application's sandbox directory. Application Support folder will contain all files that we need for the application
+    APPLICATION_SUPPORT_PATH = [NSString stringWithFormat:@"%@/Library/Application Support/", NSHomeDirectory()];
+    NSLog(@"APPLICATION_SUPPORT_PATH = %@", APPLICATION_SUPPORT_PATH);
+    
+    // Application Support folder is not always created by default. The following code creates it.
+    // Get the Bundle identifier for creating dynamic path for storing all files
+    NSString *bundle = [[NSBundle mainBundle] bundleIdentifier];
+    // FileManager is using for creating the Application Support Folder
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error = [[NSError alloc] init];
+    NSURL *appliSupportDir = [fileManager URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&error];
+    if (appliSupportDir != nil) {
+        [appliSupportDir URLByAppendingPathComponent:bundle isDirectory:YES];
     }
     else {
-        extension = nil;
+        NSLog(@"An error occured during the Creation of Application Support folder : %@", error);
     }
-    return extension;
+    
+    bundle = [[NSBundle mainBundle] pathForResource:@"Configuration" ofType:@"plist"];
+    NSDictionary *config = [[NSDictionary alloc] initWithContentsOfFile:bundle];
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        self.deviceType = @"Tablet";
+    } else {
+        self.deviceType = @"Mobile";
+    }
+    self.OS = @"IOS";
+    
+#pragma Download & save Json Files
+    // Read Json file in network
+    @try {
+        BOOL success = false;
+        // Get Application File
+        // Get config file
+        //NSString *query = [NSString stringWithFormat:@"?key1=%@&key2=%@", self.OS, self.deviceType];
+        //NSString *webApi = [NSString stringWithFormat:@"%@%@%@", [config objectForKey:@"WebAPI"], [config objectForKey:@"ApplicationID"], query];
+        
+        NSString *webApi = [NSString stringWithFormat:@"%@%@", [config objectForKey:@"WebAPI"], [config objectForKey:@"ApplicationID"]];
+        NSURL *url = [NSURL URLWithString:webApi];
+        
+        NSString *path = [NSString stringWithFormat:@"%@%@.json", APPLICATION_SUPPORT_PATH, [config objectForKey:@"ApplicationID"]];
+        if (![fileManager fileExistsAtPath:path]) {
+            NSLog(@"File does not exist");
+            // Check Connection
+            success = [self testConnection];
+            if (success) {
+                NSLog(@"Connection is OK");
+                APPLICATION_FILE = [NSData dataWithContentsOfURL:url];
+                success =[[NSData dataWithContentsOfURL:url] writeToFile:path options:NSDataWritingAtomic error:&error];
+                if (success) {
+                    _isDownloadedByNetwork = true;
+                }
+                else {
+                    NSLog(@"An error occured during the Saving of Application File : %@", error);
+                }
+            }
+        }
+        else {
+            NSLog(@"File exists");
+            APPLICATION_FILE = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:&error];
+            if (APPLICATION_FILE != nil) {
+                _isDownloadedByFile = true;
+            }
+            else {
+                NSLog(@"An error occured during the Loading of Application File : %@", error);
+            }
+        }
+        if (APPLICATION_FILE != nil) {
+            self.application = (NSMutableDictionary *)[NSJSONSerialization JSONObjectWithData:APPLICATION_FILE options:NSJSONReadingMutableLeaves error:&error];
+            if (self.application != nil) {
+                [self searchDependencies];
+            }
+            else {
+                NSLog(@"An error occured during the Deserialization of Application file : %@", error);
+            }
+        }
+    }
+    @catch (NSException *exception) {
+        NSLog(@"An error occured during the Saving of a Json file : %@, reason : %@", exception.name, exception.reason);
+        UIApplication *app = [UIApplication sharedApplication];
+        [app performSelector:@selector(suspend)];
+        // Wait while app is going background
+        [NSThread sleepForTimeInterval:2.0];
+        exit(0);
+    }
+    NSLog(@"Dl by Network : %hhd", _isDownloadedByNetwork);
+    NSLog(@"Dl by File : %hhd", _isDownloadedByFile);
 }
 
 + (NSMutableString *) addFiles:(NSArray *)dependencies
@@ -248,85 +373,10 @@ NSString *APPLICATION_SUPPORT_PATH;
         UINavigationController *navigationController = [splitViewController.viewControllers lastObject];
         splitViewController.delegate = (id)navigationController.topViewController;
     }
-    
-#pragma Create the Application Support Folder. Not accessible by users
-    // NSHomeDirectory returns the application's sandbox directory. Application Support folder will contain all files that we need for the application
-    APPLICATION_SUPPORT_PATH = [NSString stringWithFormat:@"%@/Library/Application Support/", NSHomeDirectory()];
-    NSLog(@"APPLICATION_SUPPORT_PATH = %@", APPLICATION_SUPPORT_PATH);
-    
-    // Application Support folder is not always created by default. The following code creates it.
-    // Get the Bundle identifier for creating dynamic path for storing all files
-    NSString *bundle = [[NSBundle mainBundle] bundleIdentifier];
-    // FileManager is using for creating the Application Support Folder
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSError *error = [[NSError alloc] init];
-    NSURL *appliSupportDir = [fileManager URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&error];
-    if (appliSupportDir != nil) {
-        [appliSupportDir URLByAppendingPathComponent:bundle isDirectory:YES];
-    }
-    else {
-        NSLog(@"An error occured during the Creation of Application Support folder : %@", error);
-    }
-    
-    bundle = [[NSBundle mainBundle] pathForResource:@"Configuration" ofType:@"plist"];
-    NSDictionary *config = [[NSDictionary alloc] initWithContentsOfFile:bundle];
-    
-#pragma Download & save Json Files
-    // Read Json file in network
-    @try {
-        BOOL success = false;
-        // Get Application File
-        // Get config file
-        NSString *webApi = [NSString stringWithFormat:@"%@%@", [config objectForKey:@"WebAPI"], [config objectForKey:@"ApplicationID"]];
-        NSURL *url = [NSURL URLWithString:webApi];
-        
-        NSString *path = [NSString stringWithFormat:@"%@%@.json", APPLICATION_SUPPORT_PATH, [config objectForKey:@"ApplicationID"]];
-        if (![fileManager fileExistsAtPath:path]) {
-            NSLog(@"File does not exist");
-            // Check Connection
-            success = [AppDelegate testConnection];
-            if (success) {
-                NSLog(@"Connection is OK");
-                APPLICATION_FILE = [NSData dataWithContentsOfURL:url];
-                success =[[NSData dataWithContentsOfURL:url] writeToFile:path options:NSDataWritingAtomic error:&error];
-                if (success) {
-                    _isDownloadedByNetwork = true;
-                }
-                else {
-                    NSLog(@"An error occured during the Saving of Application File : %@", error);
-                }
-            }
-        }
-        else {
-            NSLog(@"File exists");
-            APPLICATION_FILE = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:&error];
-            if (APPLICATION_FILE != nil) {
-                _isDownloadedByFile = true;
-            }
-            else {
-                NSLog(@"An error occured during the Loading of Application File : %@", error);
-            }
-        }
-        if (APPLICATION_FILE != nil) {
-            self.application = (NSMutableDictionary *)[NSJSONSerialization JSONObjectWithData:APPLICATION_FILE options:NSJSONReadingMutableLeaves error:&error];
-            if (self.application != nil) {
-                [self searchDependencies];
-            }
-            else {
-                NSLog(@"An error occured during the Deserialization of Application file : %@", error);
-            }
-        }
-    }
-    @catch (NSException *exception) {
-        NSLog(@"An error occured during the Saving of a Json file : %@, reason : %@", exception.name, exception.reason);
-        UIApplication *app = [UIApplication sharedApplication];
-        [app performSelector:@selector(suspend)];
-        // Wait while app is going background
-        [NSThread sleepForTimeInterval:2.0];
-        exit(0);
-    }
-    NSLog(@"Dl by Network : %hhd", _isDownloadedByNetwork);
-    NSLog(@"Dl by File : %hhd", _isDownloadedByFile);
+    [self registerDefaultsFromSettingsBundle];
+    [self getSettings];
+    [self configureApp];
+    return YES;
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application

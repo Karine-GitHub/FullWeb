@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		84439829199BA46700A84E40 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 84439828199BA46700A84E40 /* Settings.bundle */; };
 		846F64151994C21F00242E29 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846F64141994C21F00242E29 /* Foundation.framework */; };
 		846F64171994C21F00242E29 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846F64161994C21F00242E29 /* CoreGraphics.framework */; };
 		846F64191994C21F00242E29 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846F64181994C21F00242E29 /* UIKit.framework */; };
@@ -24,7 +25,6 @@
 		846F64431994C21F00242E29 /* VsMobile_FullWebTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 846F64421994C21F00242E29 /* VsMobile_FullWebTests.m */; };
 		846F644F1994C2C000242E29 /* Configuration.plist in Resources */ = {isa = PBXBuildFile; fileRef = 846F644C1994C2C000242E29 /* Configuration.plist */; };
 		846F64501994C2C000242E29 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 846F644E1994C2C000242E29 /* Reachability.m */; };
-		846F64521994C2D200242E29 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 846F64511994C2D200242E29 /* Settings.bundle */; };
 		846F64541994C39400242E29 /* 20-gear2.png in Resources */ = {isa = PBXBuildFile; fileRef = 846F64531994C39400242E29 /* 20-gear2.png */; };
 		846F64561994C3AA00242E29 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846F64551994C3AA00242E29 /* SystemConfiguration.framework */; };
 		846F64581994C3B200242E29 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 846F64571994C3B200242E29 /* CoreTelephony.framework */; };
@@ -57,6 +57,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		84439828199BA46700A84E40 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		846F64111994C21F00242E29 /* VsMobile_FullWeb.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VsMobile_FullWeb.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		846F64141994C21F00242E29 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		846F64161994C21F00242E29 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -80,7 +81,6 @@
 		846F644C1994C2C000242E29 /* Configuration.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Configuration.plist; sourceTree = "<group>"; };
 		846F644D1994C2C000242E29 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		846F644E1994C2C000242E29 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
-		846F64511994C2D200242E29 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		846F64531994C39400242E29 /* 20-gear2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "20-gear2.png"; sourceTree = "<group>"; };
 		846F64551994C3AA00242E29 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		846F64571994C3B200242E29 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
@@ -181,9 +181,9 @@
 		846F641A1994C21F00242E29 /* VsMobile_FullWeb */ = {
 			isa = PBXGroup;
 			children = (
+				84439828199BA46700A84E40 /* Settings.bundle */,
 				846F645B1994C5C100242E29 /* InAppSettingsKit */,
 				846F64531994C39400242E29 /* 20-gear2.png */,
-				846F64511994C2D200242E29 /* Settings.bundle */,
 				846F644C1994C2C000242E29 /* Configuration.plist */,
 				846F644D1994C2C000242E29 /* Reachability.h */,
 				846F644E1994C2C000242E29 /* Reachability.m */,
@@ -371,8 +371,8 @@
 				846F644F1994C2C000242E29 /* Configuration.plist in Resources */,
 				846F64301994C21F00242E29 /* Images.xcassets in Resources */,
 				846F64281994C21F00242E29 /* Main_iPhone.storyboard in Resources */,
-				846F64521994C2D200242E29 /* Settings.bundle in Resources */,
 				846F641F1994C21F00242E29 /* InfoPlist.strings in Resources */,
+				84439829199BA46700A84E40 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -624,6 +624,7 @@
 				846F64481994C21F00242E29 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		846F64491994C21F00242E29 /* Build configuration list for PBXNativeTarget "VsMobile_FullWebTests" */ = {
 			isa = XCConfigurationList;
@@ -632,6 +633,7 @@
 				846F644B1994C21F00242E29 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

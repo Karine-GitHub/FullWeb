@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "IASKAppSettingsViewController.h"
-
 #import "DetailsViewController.h"
 
 @interface MenuViewController : UIViewController <UIAlertViewDelegate, IASKSettingsDelegate, UITextViewDelegate, UISplitViewControllerDelegate, UIWebViewDelegate>

@@ -40,9 +40,9 @@
 			<key>Type</key>
 			<string>PSToggleSwitchSpecifier</string>
 			<key>TrueValue</key>
-			<string>On</string>
+			<true/>
 			<key>FalseValue</key>
-			<string>Off</string>
+			<false/>
 			<key>Title</key>
 			<string>Enabled</string>
 			<key>Key</key>
@@ -60,21 +60,19 @@
 			<key>DefaultValue</key>
 			<false/>
 			<key>TrueValue</key>
-			<string>Yes</string>
+			<true/>
 			<key>FalseValue</key>
-			<string>No</string>
+			<false/>
 		</dict>
 		<dict>
 			<key>Type</key>
 			<string>PSTitleValueSpecifier</string>
 			<key>Title</key>
 			<string>Frequency (by week) :</string>
-			<key>Key</key>
-			<string>frequence</string>
 		</dict>
 		<dict>
 			<key>Key</key>
-			<string>slider</string>
+			<string>frequency</string>
 			<key>MinimumValueImage</key>
 			<string>h_507218.jpg</string>
 			<key>MaximumValueImage</key>
@@ -96,7 +94,7 @@
 		</dict>
 		<dict>
 			<key>DefaultValue</key>
-			<string>ToSetByCode</string>
+			<string>dynamicVersion</string>
 			<key>Key</key>
 			<string>version</string>
 			<key>Title</key>

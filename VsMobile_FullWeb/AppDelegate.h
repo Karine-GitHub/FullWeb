@@ -22,12 +22,23 @@ extern NSString *APPLICATION_SUPPORT_PATH;
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) NSMutableDictionary *application;
+
+// Settings
+@property BOOL synchroIsEnabled;
+@property BOOL synchroOnlyWifi;
+@property NSInteger *frequency;
+
+// Used for checking if downloading is OK (differentiation for setting an appropriate error message)
 @property BOOL isDownloadedByNetwork;
 @property BOOL isDownloadedByFile;
 
-+ (BOOL) testConnection;
-+ (BOOL) testFastConnection;
-+ (NSString *) extensionType:(NSString *)type;
+// Used for WebApi : query
+@property (strong, nonatomic) NSString *const OS;
+@property (strong, nonatomic) NSString *deviceType;
+
+- (BOOL) testConnection;
+- (BOOL) testFastConnection;
+- (void) registerDefaultsFromSettingsBundle;
 + (NSMutableString *) addFiles:(NSArray *)dependencies;
 + (NSString *)createHTMLwithContent:(NSString *)htmlContent withAppDep:(NSArray *)appDep withPageDep:(NSArray *)pageDep;
 
