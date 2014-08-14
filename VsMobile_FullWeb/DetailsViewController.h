@@ -16,7 +16,6 @@
 @property (weak, nonatomic) IBOutlet UIWebView *Details;
 
 @property (strong, nonatomic) id detailItem;
-@property (strong, nonatomic) NSString *goBack;
 
 @property (strong, nonatomic) NSString *errorMsg;
 

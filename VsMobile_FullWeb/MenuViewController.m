@@ -172,11 +172,12 @@
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    NSLog(@"Query = %@", [request.URL query]);
-    NSLog(@"Absolute string : %@   Absolute Url : %@", [request.URL absoluteString], [request.URL absoluteURL]);
-    NSLog(@"Relative string : %@   Relative Path : %@", [request.URL relativeString], [request.URL relativePath]);
-    NSLog(@"Path url : %@", [request.URL path]);
-    
+    //Absolute string : file:///Users/admin/Library/Application%20Support/iPhone%20Simulator/7.1/Applications/FDE30D9E-6C0D-4F1D-96F7-E7B1174A17A2/Library/Application%20Support/details.html
+    //Absolute Url : file:///Users/admin/Library/Application%20Support/iPhone%20Simulator/7.1/Applications/FDE30D9E-6C0D-4F1D-96F7-E7B1174A17A2/Library/Application%20Support/details.html
+    //Relative string : file:///Users/admin/Library/Application%20Support/iPhone%20Simulator/7.1/Applications/FDE30D9E-6C0D-4F1D-96F7-E7B1174A17A2/Library/Application%20Support/details.html
+    //Relative Path : /Users/admin/Library/Application Support/iPhone Simulator/7.1/Applications/FDE30D9E-6C0D-4F1D-96F7-E7B1174A17A2/Library/Application Support/details.html
+    //Path url : /Users/admin/Library/Application Support/iPhone Simulator/7.1/Applications/FDE30D9E-6C0D-4F1D-96F7-E7B1174A17A2/Library/Application Support/details.html
+
     int index = [APPLICATION_SUPPORT_PATH length] - 1;
     NSString *path = [APPLICATION_SUPPORT_PATH substringToIndex:index];
     NSLog(@"Path modifié = %@", path);
@@ -190,7 +191,6 @@
         queryString = [request.URL query];
         self.showDetails = [self.storyboard instantiateViewControllerWithIdentifier:@"detailsView"];
         self.showDetails.detailItem = queryString;
-        [self.showDetails setGoBack:_PageId];
         [self.navigationController pushViewController:self.showDetails animated:YES];
         return YES;
     }

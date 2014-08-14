@@ -149,17 +149,11 @@
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    NSLog(@"Query = %@", [request.URL query]);
-    NSLog(@"Absolute string : %@   Absolute Url : %@", [request.URL absoluteString], [request.URL absoluteURL]);
-    NSLog(@"Relative string : %@   Relative Path : %@", [request.URL relativeString], [request.URL relativePath]);
-    NSLog(@"Path url : %@", [request.URL path]);
-    
     int index = [APPLICATION_SUPPORT_PATH length] - 1;
     NSString *path = [APPLICATION_SUPPORT_PATH substringToIndex:index];
     NSLog(@"Path modifié = %@", path);
     
     if ([[request.URL relativePath] isEqualToString:path]) {
-        //if ([[request.URL query] isEqual:self.detailItem]) {
             return YES;
         } else if ([[request.URL relativePath] isEqualToString:[NSString stringWithFormat:@"%@details.html", APPLICATION_SUPPORT_PATH]]) {
             return YES;
