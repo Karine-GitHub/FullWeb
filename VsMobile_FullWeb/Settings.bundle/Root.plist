@@ -68,7 +68,11 @@
 			<key>Type</key>
 			<string>PSTitleValueSpecifier</string>
 			<key>Title</key>
-			<string>Frequency (by week) :</string>
+			<string>Frequency</string>
+			<key>Key</key>
+			<string>title_frequency</string>
+			<key>DefaultValue</key>
+			<string>(by week) </string>
 		</dict>
 		<dict>
 			<key>Key</key>

@@ -32,15 +32,15 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UND-tu-cLY">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="271"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="425"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <dataDetectorType key="dataDetectorTypes" phoneNumber="YES" link="YES" address="YES" calendarEvent="YES"/>
                             </webView>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="p6R-64-Ew0">
-                                <rect key="frame" x="137" y="429" width="46" height="30"/>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="p6R-64-Ew0">
+                                <rect key="frame" x="20" y="433" width="49" height="28"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Button">
+                                <state key="normal" image="20-gear2.png">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                                 <connections>
@@ -56,6 +56,7 @@
                     <size key="freeformSize" width="320" height="568"/>
                     <connections>
                         <outlet property="Menu" destination="UND-tu-cLY" id="E2E-gc-hQ4"/>
+                        <outlet property="Settings" destination="p6R-64-Ew0" id="YsD-5S-k0s"/>
                         <segue destination="eKa-zo-ohd" kind="push" identifier="changeView" id="JDg-Pw-U7o"/>
                     </connections>
                 </viewController>
@@ -97,7 +98,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="60a-gI-pD9">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="618"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="488"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <dataDetectorType key="dataDetectorTypes" phoneNumber="YES" link="YES" address="YES" calendarEvent="YES"/>
@@ -115,6 +116,9 @@
             <point key="canvasLocation" x="803" y="812"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="20-gear2.png" width="26" height="28"/>
+    </resources>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

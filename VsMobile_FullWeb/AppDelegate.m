@@ -88,6 +88,7 @@ NSString *APPLICATION_SUPPORT_PATH;
             [modifiedPairs addObject:preference];
             // Choose items to put in Userdefaults : easiest to find by Identifier than DefaultValue
             if ([preference objectForKey:@"Key"]) {
+                NSLog(@"Key: %@   Value: %@", [preference objectForKey:@"Key"], [preference valueForKey:@"DefaultValue"]);
                 [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObject:[preference valueForKey:@"DefaultValue"] forKey:[preference objectForKey:@"Key"]]];
             }
         }

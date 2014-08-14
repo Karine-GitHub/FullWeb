@@ -17,7 +17,7 @@
 @property (nonatomic, retain) IASKAppSettingsViewController *appSettingsViewController;
 
 @property (weak, nonatomic) IBOutlet UIWebView *Menu;
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *Settings;
+@property (weak, nonatomic) IBOutlet UIButton *Settings;
 
 @property (nonatomic,retain) DetailsViewController *showDetails;
 
